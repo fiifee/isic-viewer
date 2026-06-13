@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist-server/
+.DS_Store
+*.local
+ios/App/App/public/
+android/app/src/main/assets/public/
