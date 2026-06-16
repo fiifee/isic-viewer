@@ -1,0 +1,29 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --isic-primary: #007681;
+  --isic-primary-dark: #005f6b;
+  --isic-accent: #00a3b5;
+  --isic-gold: #c9a84c;
+  --bg: #f0f4f5;
+  --text: #1a1a2e;
+  --text-light: #555;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #1a1a1a;
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}

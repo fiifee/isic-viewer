@@ -1,0 +1,213 @@
+/* ============================================================
+   ISIC Card — template.png background + draggable overlay fields
+   ============================================================ */
+
+.isic-card {
+  --card-w: 540px;
+  --card-ratio: 1.582;
+  --isic-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  width: var(--card-w);
+  aspect-ratio: var(--card-ratio);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background-image: url('/template.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  box-shadow:
+    0 10px 40px rgba(0, 60, 50, 0.38),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+
+  /* Ensure all child text inherits the same font */
+  font-family: var(--isic-font);
+
+  /* Tilt card -90 degrees */
+  transform: rotate(-90deg);
+}
+
+/* ---- Unified overlay text ---- */
+
+.isic-overlay-text {
+  font-family: var(--isic-font);
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  text-shadow: none;
+}
+
+/* ---- Draggable field overlay ---- */
+
+.isic-field-overlay {
+  position: absolute;
+  cursor: grab;
+  white-space: nowrap;
+  user-select: none;
+  font-family: inherit;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+  border-radius: 3px;
+  padding: 1px 4px;
+  transition: outline-color 0.15s;
+}
+
+.isic-field-overlay:hover {
+  outline-color: rgba(255, 255, 255, 0.35);
+}
+
+.isic-field-overlay.isic-dragging {
+  cursor: grabbing;
+  outline-color: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+
+/* ---- Drag handle ---- */
+
+.isic-drag-handle {
+  display: none;
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.isic-field-overlay:hover .isic-drag-handle,
+.isic-field-overlay.isic-dragging .isic-drag-handle {
+  display: block;
+}
+
+/* ---- Photo overlay (draggable + resizable) ---- */
+
+.isic-photo-overlay {
+  position: absolute;
+  cursor: grab;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #ddd;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.15s;
+}
+
+.isic-photo-overlay:hover {
+  outline-color: rgba(255, 255, 255, 0.35);
+}
+
+.isic-photo-overlay.isic-dragging {
+  cursor: grabbing;
+  outline-color: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+
+.isic-photo-overlay.isic-resizing {
+  cursor: nwse-resize;
+  outline-color: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+
+.isic-drag-handle--photo {
+  right: 50%;
+  top: 50%;
+  transform: translate(50%, -50%);
+  font-size: 20px;
+  display: none;
+}
+
+.isic-photo-overlay:hover .isic-drag-handle--photo {
+  display: block;
+}
+
+/* Resize handle (bottom-right corner) */
+.isic-resize-handle {
+  display: none;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+}
+
+.isic-photo-overlay:hover .isic-resize-handle,
+.isic-photo-overlay.isic-resizing .isic-resize-handle {
+  display: flex;
+}
+
+.isic-photo-overlay.isic-dragging .isic-resize-handle {
+  display: none;
+}
+
+.isic-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.isic-photo-empty {
+  width: 100%;
+  height: 100%;
+  background: #d5d5d5;
+}
+
+/* ---- Animated ISIC watermark ---- */
+
+.isic-watermark {
+  position: absolute;
+  inset: -10%;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: watermark-drift 8s ease-in-out infinite;
+}
+
+.isic-watermark svg {
+  width: 60%;
+  height: auto;
+}
+
+@keyframes watermark-drift {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg);   opacity: 0.5; }
+  25%  { transform: translate(8%, -4%) scale(1.15) rotate(3deg);  opacity: 0.8; }
+  50%  { transform: translate(-5%, 5%) scale(0.95) rotate(-2deg); opacity: 0.6; }
+  75%  { transform: translate(-8%, -3%) scale(1.1) rotate(2deg);  opacity: 0.75; }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg);   opacity: 0.5; }
+}
+
+/* ---- Responsive — fill the screen on mobile ---- */
+
+@media (max-width: 580px) {
+  .isic-card {
+    --card-w: min(98vw, 540px);
+    width: var(--card-w);
+    border-radius: 10px;
+  }
+  .isic-overlay-text {
+    font-size: 11px;
+  }
+}
+
+/* Maximize card size on all small screens */
+@media (max-height: 900px) {
+  .isic-card {
+    --card-w: min(98vw, 540px);
+    width: var(--card-w);
+  }
+  .app-main {
+    padding: 2px;
+  }
+}
+

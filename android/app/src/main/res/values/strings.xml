@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ISIC Card</string>
+    <string name="title_activity_main">ISIC Card</string>
+    <string name="package_name">ee.isic.card</string>
+    <string name="custom_url_scheme">ee.isic.card</string>
+</resources>
