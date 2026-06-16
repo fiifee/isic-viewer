@@ -2,11 +2,11 @@
 const CACHE = 'isic-card-v1';
 
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/template.png',
-  '/icon.svg',
-  '/manifest.json',
+  './',
+  './index.html',
+  './template.png',
+  './icon.svg',
+  './manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
