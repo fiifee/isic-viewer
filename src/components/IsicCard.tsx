@@ -2,10 +2,34 @@ import { useRef, useCallback, useState } from 'react';
 import type { IsicCardData, FieldPositions, FieldPosition, PhotoPosition } from '../types';
 import './IsicCard.css';
 
+const CARD_ROTATION = -90; // degrees — must match CSS transform
+
 interface Props {
   data: IsicCardData;
   positions: FieldPositions;
   onPositionChange: (key: keyof FieldPositions, pos: FieldPosition | PhotoPosition) => void;
+}
+
+/**
+ * For a CARD_ROTATION of -90°, the card's visual orientation is:
+ *   visual-right → card's internal bottom (top% increases)
+ *   visual-down  → card's internal left  (left% decreases)
+ *
+ * getBoundingClientRect() returns the axis-aligned bounding box where
+ * rect.width = visual height = card-height, rect.height = visual width = card-width.
+ */
+
+function visualToCard(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect
+): { left: number; top: number } {
+  const visualX = clientX - rect.left;
+  const visualY = clientY - rect.top;
+  // rect.width = card's internal height, rect.height = card's internal width
+  const left = 100 - (visualY / rect.height) * 100;
+  const top = (visualX / rect.width) * 100;
+  return { left, top };
 }
 
 /**
@@ -26,7 +50,7 @@ function DraggableField({
   children: React.ReactNode;
 }) {
   const [dragging, setDragging] = useState(false);
-  const offsetRef = useRef({ x: 0, y: 0 });
+  const offsetRef = useRef({ dx: 0, dy: 0 });
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -36,9 +60,10 @@ function DraggableField({
       const card = cardRef.current;
       if (!card) return;
       const rect = card.getBoundingClientRect();
+      const vis = visualToCard(e.clientX, e.clientY, rect);
       offsetRef.current = {
-        x: e.clientX - rect.left - (position.left / 100) * rect.width,
-        y: e.clientY - rect.top - (position.top / 100) * rect.height,
+        dx: vis.left - position.left,
+        dy: vis.top - position.top,
       };
     },
     [cardRef, position]
@@ -50,11 +75,10 @@ function DraggableField({
       const card = cardRef.current;
       if (!card) return;
       const rect = card.getBoundingClientRect();
-      const left = ((e.clientX - rect.left - offsetRef.current.x) / rect.width) * 100;
-      const top = ((e.clientY - rect.top - offsetRef.current.y) / rect.height) * 100;
+      const vis = visualToCard(e.clientX, e.clientY, rect);
       onMove({
-        left: Math.max(0, Math.min(100, Math.round(left * 10) / 10)),
-        top: Math.max(0, Math.min(100, Math.round(top * 10) / 10)),
+        left: Math.max(0, Math.min(100, Math.round((vis.left - offsetRef.current.dx) * 10) / 10)),
+        top: Math.max(0, Math.min(100, Math.round((vis.top - offsetRef.current.dy) * 10) / 10)),
       });
     },
     [dragging, cardRef, onMove]
@@ -101,10 +125,10 @@ function DraggablePhoto({
 }) {
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
-  const offsetRef = useRef({ x: 0, y: 0 });
+  const offsetRef = useRef({ dx: 0, dy: 0 });
   const sizeRef = useRef({ w: 0, h: 0, startX: 0, startY: 0 });
 
-  // --- Drag (move) ---
+  // --- Drag (move) --- rotation-aware
   const handleDragStart = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -113,10 +137,8 @@ function DraggablePhoto({
       const card = cardRef.current;
       if (!card) return;
       const rect = card.getBoundingClientRect();
-      offsetRef.current = {
-        x: e.clientX - rect.left - (position.left / 100) * rect.width,
-        y: e.clientY - rect.top - (position.top / 100) * rect.height,
-      };
+      const vis = visualToCard(e.clientX, e.clientY, rect);
+      offsetRef.current = { dx: vis.left - position.left, dy: vis.top - position.top };
     },
     [cardRef, position]
   );
@@ -144,24 +166,24 @@ function DraggablePhoto({
     (e: React.MouseEvent) => {
       const card = cardRef.current;
       if (!card) return;
+      const rect = card.getBoundingClientRect();
 
       if (dragging) {
-        const rect = card.getBoundingClientRect();
-        const left = ((e.clientX - rect.left - offsetRef.current.x) / rect.width) * 100;
-        const top = ((e.clientY - rect.top - offsetRef.current.y) / rect.height) * 100;
+        const vis = visualToCard(e.clientX, e.clientY, rect);
         onMove({
           ...position,
-          left: Math.max(0, Math.min(100, Math.round(left * 10) / 10)),
-          top: Math.max(0, Math.min(100, Math.round(top * 10) / 10)),
+          left: Math.max(0, Math.min(100, Math.round((vis.left - offsetRef.current.dx) * 10) / 10)),
+          top: Math.max(0, Math.min(100, Math.round((vis.top - offsetRef.current.dy) * 10) / 10)),
         });
       }
 
       if (resizing) {
-        const rect = card.getBoundingClientRect();
+        // resize uses raw pixel deltas — works on visual coordinates
         const dx = ((e.clientX - sizeRef.current.startX) / rect.width) * 100;
         const dy = ((e.clientY - sizeRef.current.startY) / rect.height) * 100;
-        const newW = Math.max(5, Math.min(80, Math.round((sizeRef.current.w + dx) * 10) / 10));
-        const newH = Math.max(5, Math.min(80, Math.round((sizeRef.current.h + dy) * 10) / 10));
+        // For resize, visual-right = taller (height), visual-down = wider (width) for -90°
+        const newH = Math.max(5, Math.min(80, Math.round((sizeRef.current.h + dx) * 10) / 10));
+        const newW = Math.max(5, Math.min(80, Math.round((sizeRef.current.w - dy) * 10) / 10));
         onMove({
           ...position,
           width: newW,
